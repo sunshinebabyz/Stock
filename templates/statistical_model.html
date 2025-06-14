@@ -1,0 +1,468 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Stock Prediction</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    <!-- Favicon -->
+    <link rel="icon" href="../static/image/dollar_icon.png">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Roboto:wght@500;700&display=swap" rel="stylesheet"> 
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../static/lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+    <link href="../static/lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css" rel="stylesheet" />
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../static/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../static/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container-fluid position-relative d-flex p-0">
+        <div id="spinner" class="show bg-dark position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar pe-4 pb-3">
+            <nav class="navbar bg-secondary navbar-dark">
+                <a href="/" class="navbar-brand mx-4 mb-3">
+                    <h3 class="text-primary"><i class="fa fa-user-edit me-2"></i>Stocks</h3>
+                </a>
+                <div class="d-flex align-items-center ms-4 mb-4">
+                    <div class="position-relative">
+                        <img class="rounded-circle" src="{{ url_for('static', filename='image/user.png') }}" alt="" style="width: 40px; height: 40px;">
+                        <div class="bg-success rounded-circle border border-2 border-white position-absolute end-0 bottom-0 p-1"></div>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="mb-0">Welcome</h6>
+                        <span>Guest</span>
+                    </div>
+                </div>
+                <div class="navbar-nav w-100">
+                    <a href="../" class="nav-item nav-link"><i class="fa fa-home me-2"></i>Home</a>
+                    <a href="../ticker" class="nav-item nav-link"><i class="fa fa-list-alt me-2"></i>Ticker Info</a>
+                    <a href="#" class="nav-item nav-link active"><i class="fa fa-search me-2"></i>Statistical Model</a>
+                    <a href="/ml" class="nav-item nav-link"><i class="fa fa-cogs me-2"></i>Machine Learning</a>
+                    <a href="/evaluation" class="nav-item nav-link"><i class="fa fa-chart-line me-2"></i>Model Evaluation</a>
+
+                </div>
+            </nav>
+        </div>
+        <!-- Sidebar End -->
+
+        <!-- Content Start -->
+        <div class="content">
+            <nav class="navbar navbar-expand bg-secondary navbar-dark sticky-top px-4 py-0">
+                <a href="../" class="navbar-brand d-flex d-lg-none me-4">
+                    <h2 class="text-primary mb-0"><i class="fa fa-user-edit"></i></h2>
+                </a>
+                <a href="#" class="sidebar-toggler flex-shrink-0">
+                    <i class="fa fa-bars"></i>
+                </a>
+                <div class="navbar-nav align-items-center ms-auto">
+                    <div class="nav-item dropdown">
+                    
+                        <div class="dropdown-menu dropdown-menu-end bg-secondary border-0 rounded-0 rounded-bottom m-0">
+                            <a href="#" class="dropdown-item">Predict</a>
+                            <a href="../ticker" class="dropdown-item">Ticker Info</a>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content Start -->
+            <div class="container-fluid pt-4 px-4">
+                <div class="row g-4">
+                    <!-- Biểu Đồ Giá Gần Nhất -->
+                    
+
+                <div class="col-sm-12 col-xl-6">
+                    <div class="bg-secondary text-center rounded p-4">
+                        <h5 class="text-danger">Recent Stock Price: {{ symbol }}</h5>
+                        <p class="fs-4 text-white mt-2"><strong>${{ latest_price }}</strong></p>
+                    </div>
+                </div>
+
+                <div class="col-sm-12 col-xl-6">
+                    <div class="bg-secondary text-center rounded p-4">
+                        <h5 class="text-danger">
+                            {% if model == 'ARIMA' %}
+                                Predicted Price After {{ steps }} Days
+                            {% else %}
+                                Predicted Price 5 Days
+                            {% endif %}
+                        </h5>
+
+
+                        <p class="fs-4 text-white mt-2">
+                            <strong>
+                            {% if forecast_day5 is not none %}
+                                ${{ forecast_day5 }}
+                            {% else %}
+                                $None
+                            {% endif %}
+
+                            </strong>
+                        </p>
+                    </div>
+                </div>
+
+
+
+
+
+
+
+                <!-- Stock Prediction Form & Results -->
+                <div class="bg-secondary text-center rounded p-4 mt-5">
+                    <h5 class="text-primary mb-4">Enter Stock Symbol for Prediction</h5>
+
+                    <form method="GET" action="/statistical_model" onsubmit="return validateForm()">
+                        <div class="d-flex flex-wrap justify-content-center gap-3 mb-4">
+                            <input type="text" name="code" id="codeInput" class="form-control rounded-pill w-25"
+                                   placeholder="Enter stock symbol..." value="{{ symbol }}">
+
+
+                            <select name="model" class="form-select rounded-pill w-25" onchange="handleModelChange(this)">
+                                <option value="MA" {% if model == 'MA' %}selected{% endif %}>Moving Average (MA)</option>
+                                <option value="ES" {% if model == 'ES' %}selected{% endif %}>Exponential Smoothing (ES)</option>
+                                <option value="ARIMA" {% if model == 'ARIMA' %}selected{% endif %}>ARIMA</option>
+                                <option value="HOLT" {% if model == 'HOLT' %}selected{% endif %}>Holt Linear Trend</option>
+
+                            </select>
+                            
+                            {% if model == 'ES' %}
+                                <input type="number" step="0.01" min="0" max="1" name="alpha"
+                                    class="form-control rounded-pill w-25"
+                                    placeholder="Alpha (0 - 1)" value="{{ alpha or 0.3 }}">
+                            {% elif model == 'HOLT' %}
+                                <div class="d-flex flex-column align-items-center w-100">
+                                    <div class="d-flex flex-wrap justify-content-center gap-3 w-100">
+                                        <div class="w-25">
+                                            <label class="text-white mb-1">Alpha</label>
+                                            <input type="number" step="0.01" min="0" max="1" name="alpha"
+                                                class="form-control rounded-pill"
+                                                placeholder="Alpha (0 - 1)" value="{{ alpha or 0.3 }}">
+                                        </div>
+                                        <div class="w-25">
+                                            <label class="text-white mb-1">Beta</label>
+                                            <input type="number" step="0.01" min="0" max="1" name="beta"
+                                                class="form-control rounded-pill"
+                                                placeholder="Beta (0 - 1)" value="{{ beta or 0.1 }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            {% elif model == 'ARIMA' %}
+                                <input type="number" min="1" max="30" name="steps"
+                                    class="form-control rounded-pill w-25"
+                                    placeholder="Steps (1 - 30)" value="{{ steps or 5 }}">
+                            {% endif %}
+                            <button class="btn btn-primary rounded-pill" type="submit">
+                                <i class="fa fa-chart-line me-2"></i> Predict
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- MA Model Results -->
+
+                    
+
+                    {% if model == 'MA' and ma_errors %}
+                    <h4 class="model-title">Moving Average (MA)</h4>
+                    <div class="rounded shadow p-3 mb-4" style="background-color: #1f2937;">
+                        {{ moving_averages_html | safe }}
+                    </div>
+
+
+                        <div class="row g-4 mt-4">
+                        
+                            {% for ma, values in ma_errors.items() %}
+                            <div class="col-md-6 col-xl-6">
+                                <div class="text-white">
+                                    <h6 class="text-info mb-2">{{ ma }}</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="error-box error-train">
+                                                <h6 class="mb-2">Train</h6>
+                                                <p>MAE: <strong>{{ values.Train.MAE if values.Train.MAE is defined and values.Train.MAE is not none else 'N/A' }}</strong></p>
+                                                <p>RMSE: <strong>{{ values.Train.RMSE if values.Train.RMSE is defined and values.Train.RMSE is not none else 'N/A' }}</strong></p>
+                                                <p>MAPE: <strong>{{ values.Train.MAPE if values.Train.MAPE is defined and values.Train.MAPE is not none else 'N/A' }}%</strong></p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="error-box error-test">
+                                                <h6 class="mb-2">Test</h6>
+                                                <p>MAE: <strong>{{ values.Test.MAE if values.Test.MAE is defined and values.Test.MAE is not none else 'N/A' }}</strong></p>
+                                                <p>RMSE: <strong>{{ values.Test.RMSE if values.Test.RMSE is defined and values.Test.RMSE is not none else 'N/A' }}</strong></p>
+                                                <p>MAPE: <strong>{{ values.Test.MAPE if values.Test.MAPE is defined and values.Test.MAPE is not none else 'N/A' }}%</strong></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                        </div>
+                    {% endif %}
+
+
+                    <!-- ES Model Results -->
+                    {% if model == 'ES' and es_html %}
+                    <h5 class="model-title">Exponential Smoothing (ES)</h5>
+                    <div class="rounded shadow p-3 mb-4" style="background-color: #1f2937;">
+                        {{ es_html | safe }}
+                    </div>
+
+                  
+                    {% if es_errors %}
+                    <div class="row g-4 mt-4">
+                        <div class="col-md-6">
+                            <div class="error-box error-train">
+                                <h6 class="mb-3">ES Train Errors</h6>
+                                <p class="mb-1">MAE: 
+                                    <strong>
+                                        {% if es_errors.Train.MAE is not none %}
+                                            {{ es_errors.Train.MAE | round(4) }}
+                                        {% else %} N/A {% endif %}
+                                    </strong>
+                                </p>
+                                <p class="mb-1">RMSE: 
+                                    <strong>
+                                        {% if es_errors.Train.RMSE is not none %}
+                                            {{ es_errors.Train.RMSE | round(4) }}
+                                        {% else %} N/A {% endif %}
+                                    </strong>
+                                </p>
+                                <p class="mb-1">MAPE: 
+                                    <strong>
+                                        {% if es_errors.Train.MAPE is not none %}
+                                            {{ es_errors.Train.MAPE | round(2) }}%
+                                        {% else %} N/A {% endif %}
+                                    </strong>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="error-box error-test">
+                                <h6 class="mb-3">ES Test Errors</h6>
+                                <p class="mb-1">MAE: 
+                                    <strong>
+                                        {% if es_errors.Test.MAE is not none %}
+                                            {{ es_errors.Test.MAE | round(4) }}
+                                        {% else %} N/A {% endif %}
+                                    </strong>
+                                </p>
+                                <p class="mb-1">RMSE: 
+                                    <strong>
+                                        {% if es_errors.Test.RMSE is not none %}
+                                            {{ es_errors.Test.RMSE | round(4) }}
+                                        {% else %} N/A {% endif %}
+                                    </strong>
+                                </p>
+                                <p class="mb-1">MAPE: 
+                                    <strong>
+                                        {% if es_errors.Test.MAPE is not none %}
+                                            {{ es_errors.Test.MAPE | round(2) }}%
+                                        {% else %} N/A {% endif %}
+                                    </strong>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+
+                    <!-- ARIMA -->
+                    {% if model == 'ARIMA' and arima_chart_file %}
+                    <h4 class="model-title">ARIMA Forecast Chart</h4>
+                    <div class="row justify-content-center">
+                        <div class="col-12">
+                            <div class="bg-dark rounded p-3 shadow">
+                                <iframe src="{{ url_for('static', filename='charts/' ~ arima_chart_file) }}"
+                                        style="width: 100%; height: 600px; border: none;"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    
+                    {% if model == 'ARIMA' and arima_errors %}
+                    <div class="row g-4 mt-4">
+                        <div class="col-md-6">
+                            <div class="error-box error-train">
+                                <h6>ARIMA Train Errors</h6>
+                                <p class="mb-1">MAE: 
+                                    <strong>
+                                        {% if arima_errors.Train.MAE is not none %}
+                                            {{ arima_errors.Train.MAE | round(4) }}
+                                        {% else %} N/A {% endif %}
+                                    </strong>
+                                </p>
+                                <p class="mb-1">RMSE: 
+                                    <strong>
+                                        {% if arima_errors.Train.RMSE is not none %}
+                                            {{ arima_errors.Train.RMSE | round(4) }}
+                                        {% else %} N/A {% endif %}
+                                    </strong>
+                                </p>
+                                <p class="mb-1">MAPE: 
+                                    <strong>
+                                        {% if arima_errors.Train.MAPE is not none %}
+                                            {{ arima_errors.Train.MAPE | round(2) }}%
+                                        {% else %} N/A {% endif %}
+                                    </strong>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="error-box error-test">
+                                <h6>ARIMA Test Errors</h6>
+                                <p class="mb-1">MAE: 
+                                    <strong>
+                                        {% if arima_errors.Test.MAE is not none %}
+                                            {{ arima_errors.Test.MAE | round(4) }}
+                                        {% else %} N/A {% endif %}
+                                    </strong>
+                                </p>
+                                <p class="mb-1">RMSE: 
+                                    <strong>
+                                        {% if arima_errors.Test.RMSE is not none %}
+                                            {{ arima_errors.Test.RMSE | round(4) }}
+                                        {% else %} N/A {% endif %}
+                                    </strong>
+                                </p>
+                                <p class="mb-1">MAPE: 
+                                    <strong>
+                                        {% if arima_errors.Test.MAPE is not none %}
+                                            {{ arima_errors.Test.MAPE | round(2) }}%
+                                        {% else %} N/A {% endif %}
+                                    </strong>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+
+
+                <!-- HOLTTREND -->
+                {% if model == 'HOLT' and holt_html %}
+                <h4 class="model-title">Holt Linear Trend</h4>
+                <div class="rounded p-3 mb-4" style="background-color: #1f2937;">
+                    {{ holt_html | safe }}
+                </div>
+                {% endif %}
+
+                {% if holt_errors %}
+                <div class="row g-4 mt-4">
+                    <div class="col-md-6">
+                        <div class="error-box error-train">
+                            <h6 class="mb-3">Holt Train Errors</h6>
+                            <p class="mb-1">MAE: <strong>{{ holt_errors.Train.MAE | round(4) }}</strong></p>
+                            <p class="mb-1">RMSE: <strong>{{ holt_errors.Train.RMSE | round(4) }}</strong></p>
+                            <p class="mb-1">MAPE: <strong>{{ holt_errors.Train.MAPE | round(2) }}%</strong></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="error-box error-test">
+                            <h6 class="mb-3">Holt Test Errors</h6>
+                            <p class="mb-1">MAE: <strong>{{ holt_errors.Test.MAE | round(4) }}</strong></p>
+                            <p class="mb-1">RMSE: <strong>{{ holt_errors.Test.RMSE | round(4) }}</strong></p>
+                            <p class="mb-1">MAPE: <strong>{{ holt_errors.Test.MAPE | round(2) }}%</strong></p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+
+
+
+
+
+
+            
+            <!-- Footer Start -->
+            <div class="container-fluid pt-4 px-4">
+                <div class="bg-secondary rounded-top p-4">
+                    <div class="row">
+                        <div class="col-12 col-sm-6 text-center text-sm-start">
+                            &copy; <a href="#">lig.zz</a>, All Right Reserved. 
+                        </div>
+                        <div class="col-12 col-sm-6 text-center text-sm-end">
+                            Designed By <a href="https://portfolio-website-azure-eta.vercel.app/">lig.zz</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Footer End -->
+        </div>
+        <!-- Content End -->
+
+        <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../static/lib/chart/chart.min.js"></script>
+    <script src="../static/lib/easing/easing.min.js"></script>
+    <script src="../static/lib/waypoints/waypoints.min.js"></script>
+    <script src="../static/lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="../static/lib/tempusdominus/js/moment.min.js"></script>
+    <script src="../static/lib/tempusdominus/js/moment-timezone.min.js"></script>
+    <script src="../static/lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="../static/js/main.js"></script>
+</body>
+<script>
+function validateForm() {
+    const codeInput = document.getElementById("codeInput");
+    const code = codeInput.value.trim();
+    if (!code) {
+        alert("Vui lòng nhập mã chứng khoán trước khi tiếp tục.");
+        return false;  // chặn submit
+    }
+    return true; // cho phép submit nếu hợp lệ
+}
+</script>
+<script>
+function handleModelChange(select) {
+    const form = select.closest('form');
+    const symbol = form.querySelector('input[name="code"]').value;
+    const alphaInput = form.querySelector('input[name="alpha"]');
+    const stepsInput = form.querySelector('input[name="steps"]');
+
+    let query = `?code=${symbol}&model=${select.value}`;
+
+    if (select.value === 'ES') {
+        const alpha = alphaInput ? alphaInput.value : 0.3;
+        query += `&alpha=${alpha}`;
+    }
+
+    if (select.value === 'ARIMA') {
+        const steps = stepsInput ? stepsInput.value : 5;
+        query += `&steps=${steps}`;
+    }
+
+    // Điều hướng
+    window.location.href = `/statistical_model${query}`;
+}
+</script>
+</html>

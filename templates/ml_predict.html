@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Predict Price</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <link rel="icon" href="../static/image/dollar_icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Roboto:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../static/css/style.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid position-relative d-flex p-0">
+
+    <!-- Sidebar Start -->
+    <div class="sidebar pe-4 pb-3">
+        <nav class="navbar bg-secondary navbar-dark">
+            <a href="/" class="navbar-brand mx-4 mb-3">
+                <h3 class="text-primary"><i class="fa fa-user-edit me-2"></i>Stocks</h3>
+            </a>
+            <div class="d-flex align-items-center ms-4 mb-4">
+                <div class="position-relative">
+                    <img class="rounded-circle" src="{{ url_for('static', filename='image/user.png') }}" style="width: 40px; height: 40px;">
+                    <div class="bg-success rounded-circle border border-2 border-white position-absolute end-0 bottom-0 p-1"></div>
+                </div>
+                <div class="ms-3">
+                    <h6 class="mb-0">Welcome</h6>
+                    <span>Guest</span>
+                </div>
+            </div>
+
+            <div class="navbar-nav w-100" id="mainMenu">
+                <a href="/" class="nav-item nav-link"><i class="fa fa-home me-2"></i>Home</a>
+
+                <a href="#tickerSubmenu" class="nav-item nav-link {% if 'ticker' in request.path %}active{% endif %}" 
+                   data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="tickerSubmenu">
+                    <i class="fa fa-list-alt me-2"></i>Ticker Info
+                </a>
+                <div class="collapse {% if 'ticker' in request.path %}show{% endif %} ms-4" id="tickerSubmenu" data-bs-parent="#mainMenu">
+                    <a href="/ticker/statistics?code={{ symbol }}" class="nav-item nav-link {% if 'statistics' in request.path %}active{% endif %}">
+                        Descriptive Statistics
+                    </a>
+                    <a href="/ticker/timeseries?code={{ symbol }}" class="nav-item nav-link {% if 'timeseries' in request.path %}active{% endif %}">
+                        Time Series
+                    </a>
+                </div>
+
+                <a href="/statistical_model" class="nav-item nav-link {% if 'statistical_model' in request.path %}active{% endif %}">
+                    <i class="fa fa-search me-2"></i>Statistical Model
+                </a>
+
+         
+                <a href="#mlSubmenu" class="nav-item nav-link {% if 'ml' in request.path %}active{% endif %}" 
+                data-bs-toggle="collapse" role="button" aria-expanded="true" aria-controls="mlSubmenu">
+                <i class="fa fa-cogs me-2"></i>Machine Learning
+                </a>
+                <div class="collapse show" id="mlSubmenu" data-bs-parent="#mainMenu">
+                    <a href="/ml/train?symbol=EXAMPLE" class="nav-item nav-link ms-4 {% if '/ml/train' in request.path %}active{% endif %}">Train Model</a>
+                    <a href="/ml/analyze?symbol=EXAMPLE" class="nav-item nav-link ms-4 {% if '/ml/analyze' in request.path %}active{% endif %}">View Analysis</a>
+                    <a href="/ml/predict?symbol=EXAMPLE" class="nav-item nav-link ms-4 {% if '/ml/predict' in request.path %}active{% endif %}">Predict</a>
+                </div>
+
+                <a href="/evaluation" class="nav-item nav-link {% if 'evaluation' in request.path %}active{% endif %}">
+                    <i class="fa fa-chart-line me-2"></i>Model Evaluation
+                </a>
+            </div>
+        </nav>
+    </div>
+    <!-- Sidebar End -->
+
+    <!-- Content Start -->
+    <div class="content">
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand bg-secondary navbar-dark sticky-top px-4 py-0">
+            <a href="#" class="sidebar-toggler flex-shrink-0"><i class="fa fa-bars"></i></a>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container-fluid pt-4 px-4">
+            <div class="bg-secondary text-center rounded p-4">
+                <h4 class="text-primary mb-4 fw-bold" style="letter-spacing:1px;">Predict Future Prices</h4>
+
+                <form method="POST" action="/ml/predict" class="mb-4">
+                    <div class="row justify-content-center align-items-center g-3">
+                        <div class="col-md-4">
+                            <select name="trained_model" class="form-select rounded-pill" required>
+                                <option value="" disabled selected>-- Select trained model --</option>
+                                {% for model in available_models %}
+                                    <option value="{{ model }}" {% if model == selected_model %}selected{% endif %}>{{ model }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+
+                            <input type="number" name="days" class="form-control rounded-pill"
+                                placeholder="Forecast Days" value="{{ forecast_days or 5 }}" min="1" required>
+                        
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <button type="submit" class="btn btn-primary rounded-pill px-5">
+                                <i class="fa fa-chart-line me-2"></i>Predict
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                {% if message %}
+                <div class="alert alert-info mt-4 shadow rounded-pill text-center" style="font-size: 1.1rem;">{{ message }}</div>
+                {% endif %}
+
+                {% if has_future_forecast %}
+                <h5 class="text-white mt-5">Forecast Results</h5>
+                <div class="bg-dark text-white p-4 rounded-3 mt-3 shadow">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped table-hover rounded">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Predicted Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in forecast_rows %}
+                                    <tr>
+                                        <td>{{ row[0] }}</td>
+                                        <td>${{ '%.2f'|format(row[1]) }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+            
+
+                {% if chart_html %}
+                    <h5 class="text-white mt-4">Prediction Chart</h5>
+                    <div class="rounded shadow mt-3 chart-box overflow-x-auto">
+                        {{ chart_html | safe }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+
+
+
+
+
+                {% if chart_path %}
+                <h5 class="text-white mt-4">Prediction Chart</h5>
+                <iframe src="{{ url_for('static', filename='charts/' ~ chart_path) }}"
+                        style="width:100%; height:600px; border:none;" class="rounded shadow mt-3"></iframe>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="container-fluid pt-4 px-4">
+            <div class="bg-secondary rounded-top p-4 text-center text-white">
+                &copy; <a href="#">lig.zz</a>, All Rights Reserved.
+            </div>
+        </div>
+    </div>
+    <!-- Content End -->
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../static/js/main.js"></script>
+</body>
+</html>
