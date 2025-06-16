@@ -1,6 +1,5 @@
-# Dockerfile - dùng cho Flask + TensorFlow + ML app trên Render
-
-FROM python:3.10-slim
+# Dùng image Python đầy đủ thay vì slim
+FROM python:3.10
 
 WORKDIR /app
 
