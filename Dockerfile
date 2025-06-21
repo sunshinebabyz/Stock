@@ -1,5 +1,5 @@
 # Dùng image Python đầy đủ thay vì slim
-FROM python:3.10
+FROM python:3.9
 
 WORKDIR /app
 
