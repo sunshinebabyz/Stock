@@ -7,5 +7,4 @@ scikit-learn
 statsmodels
 pmdarima
 yfinance
-tensorflow==2.10.0
 joblib
