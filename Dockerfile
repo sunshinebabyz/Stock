@@ -1,4 +1,14 @@
-FROM python:3.9
+FROM python:3.10
+
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    build-essential \
+    libatlas-base-dev \
+    liblapack-dev \
+    libblas-dev \
+    gfortran \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -12,4 +22,4 @@ COPY . .
 ENV PORT=10000
 EXPOSE 10000
 
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-10000} app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "app:app"]
